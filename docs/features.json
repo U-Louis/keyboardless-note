@@ -1,0 +1,101 @@
+[
+  {
+    "id": "F1",
+    "module": "M1",
+    "category": "functional",
+    "description": "A person can create a note titled Lamp and see that title with an empty body.",
+    "steps": [
+      "Open the page with an empty store",
+      "Press n",
+      "Type Lamp",
+      "Press Enter",
+      "See Lamp in the list and an empty body",
+      "See the stored title Lamp"
+    ],
+    "passes": false
+  },
+  {
+    "id": "F2",
+    "module": "M1",
+    "category": "functional",
+    "description": "An empty title, or a title over 80 characters, is refused. Clearing the title of an existing note is refused and the previous title stays.",
+    "steps": [
+      "Press n and Enter without a title",
+      "See data-error-code note.title.required and an unchanged store",
+      "Press n, type 81 characters, and press Enter",
+      "See data-error-code note.title.too_long and an unchanged store",
+      "On an existing note titled Lamp, clear the title and press Enter",
+      "See note.title.required and the stored title still Lamp"
+    ],
+    "passes": false
+  },
+  {
+    "id": "F3",
+    "module": "M1",
+    "category": "functional",
+    "description": "The body desk is still there after reload.",
+    "steps": [
+      "Create a note titled Lamp",
+      "Type desk in the body",
+      "Reload the page",
+      "See the body desk"
+    ],
+    "passes": false
+  },
+  {
+    "id": "F4",
+    "module": "M1",
+    "category": "functional",
+    "description": "d on the selected note removes it, including after reload.",
+    "steps": [
+      "Create a note titled Lamp",
+      "Focus the list",
+      "Press d",
+      "Reload the page",
+      "See an empty list"
+    ],
+    "passes": false
+  },
+  {
+    "id": "F5",
+    "module": "M2",
+    "category": "functional",
+    "description": "Hold v, speak a new note titled Lamp, and see that title with an empty body.",
+    "steps": [
+      "Open the page with an empty store",
+      "Hold v and release",
+      "The page posts a sound file to /api/talk",
+      "The returned instruction is create with title Lamp",
+      "See Lamp in the list and an empty body",
+      "See the stored title Lamp"
+    ],
+    "passes": false
+  },
+  {
+    "id": "F6",
+    "module": "M2",
+    "category": "functional",
+    "description": "A spoken create with an empty title is refused and the store stays empty.",
+    "steps": [
+      "Hold v and release",
+      "The returned instruction is create with a blank title",
+      "See data-error-code note.title.required and an unchanged store"
+    ],
+    "passes": false
+  },
+  {
+    "id": "F7",
+    "module": "M2",
+    "category": "functional",
+    "description": "A spoken delete removes the selected note, including after reload.",
+    "steps": [
+      "Create a note titled Lamp",
+      "Focus the list",
+      "Hold v and release",
+      "The returned instruction is delete",
+      "Reload the page",
+      "See an empty list"
+    ],
+    "passes": false
+  }
+]

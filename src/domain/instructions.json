@@ -1,0 +1,13 @@
+{
+  "step": ["id", "after"],
+  "actions": [
+    { "action": "create", "arguments": ["title"] },
+    { "action": "update_title", "arguments": ["title"], "optional": ["target"] },
+    { "action": "update_body", "arguments": ["body"], "optional": ["target"] },
+    { "action": "delete", "arguments": [], "optional": ["target"] },
+    { "action": "read_card", "arguments": [], "optional": ["target"] },
+    { "action": "read_all", "arguments": [] },
+    { "action": "count", "arguments": [] },
+    { "action": "none", "arguments": [] }
+  ]
+}

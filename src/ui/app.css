@@ -5,10 +5,53 @@ body {
   color: #1c1917;
 }
 
+.bar {
+  display: flex;
+  justify-content: flex-end;
+  max-width: 72rem;
+  margin: 0 0 0.75rem;
+}
+
+.tag {
+  margin: 0;
+  padding: 0.15rem 0.7rem;
+  border: 1px solid #a8a29e;
+  border-radius: 999px;
+  background: transparent;
+  color: #57534e;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1.6;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.tag:hover {
+  border-color: #1c1917;
+  color: #1c1917;
+}
+
+.tag[aria-pressed='true'] {
+  border-color: #1c1917;
+  background: #1c1917;
+  color: #faf7f2;
+}
+
+.tag[aria-pressed='true']:hover {
+  background: #292524;
+}
+
 .hint {
   margin: 0 0 1rem;
   max-width: 72rem;
   color: #57534e;
+}
+
+main[data-hands='off'] .board,
+main[data-hands='off'] .board * {
+  pointer-events: none;
 }
 
 .board {

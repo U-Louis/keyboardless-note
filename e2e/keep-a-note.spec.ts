@@ -1,8 +1,18 @@
 import { expect, test, type Page } from '@playwright/test'
 
+async function allowInput(page: Page) {
+  const tag = page.getByRole('button', { name: 'Input' })
+  if ((await tag.getAttribute('aria-pressed')) !== 'true') await tag.click()
+  await expect(tag).toHaveAttribute('aria-pressed', 'true')
+  const list = page.getByRole('listbox', { name: 'Notes' })
+  await list.focus()
+  await expect(list).toBeFocused()
+}
+
 async function openPage(page: Page) {
   await page.goto('/')
   await expect(page.getByRole('listbox', { name: 'Notes' })).toBeFocused()
+  await allowInput(page)
 }
 
 async function createLamp(page: Page) {
@@ -62,6 +72,7 @@ test('keeps the body desk after reload', async ({ page }) => {
   await page.keyboard.type('desk')
   await page.reload()
   await expect(page.getByRole('option', { name: 'Lamp' })).toBeVisible()
+  await allowInput(page)
   await expect(page.getByLabel('Body')).toHaveValue('desk')
 })
 
@@ -121,4 +132,44 @@ test('shows every card in the board, adds with +, and deletes with ×', async ({
   await page.reload()
   await expect(page.getByRole('option', { name: 'Lamp' })).toHaveCount(0)
   await expect(page.getByRole('option', { name: 'Chair' })).toBeVisible()
+})
+
+test('clicks and keys stay off until the input tag is on', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'keyboardless-note',
+      JSON.stringify([{ id: '1', title: 'Lamp', body: 'desk' }]),
+    )
+  })
+  await page.goto('/')
+  const input = page.getByRole('button', { name: 'Input' })
+  const talk = page.getByRole('button', { name: 'Push to talk' })
+  const lamp = page.getByRole('option', { name: 'Lamp' })
+  await expect(input).toHaveAttribute('aria-pressed', 'false')
+  await expect(talk).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Add card' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Delete Lamp' })).toHaveCount(0)
+  await expect(page.getByLabel('Title')).toHaveCount(0)
+  await expect(lamp).toHaveCSS('pointer-events', 'none')
+  await lamp.evaluate((el) => {
+    el.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+  })
+  await page.keyboard.press('n')
+  await page.keyboard.press('d')
+  await page.keyboard.type('nope')
+  await expect(page.getByLabel('Title')).toHaveCount(0)
+  await expect(lamp).toBeVisible()
+  await input.click()
+  await expect(input).toHaveAttribute('aria-pressed', 'true')
+  const add = page.getByRole('button', { name: 'Add card' })
+  const remove = page.getByRole('button', { name: 'Delete Lamp' })
+  await expect(add).toBeVisible()
+  await expect(remove).toBeVisible()
+  await expect(lamp).toHaveCSS('pointer-events', 'auto')
+  await expect(page.getByLabel('Title')).toBeVisible()
+  await expect(page.getByLabel('Body')).toHaveValue('desk')
+  await add.hover()
+  await expect(add).toHaveCSS('background-color', 'rgb(255, 253, 248)')
+  await remove.hover()
+  await expect(remove).toHaveCSS('background-color', 'rgb(253, 232, 232)')
 })

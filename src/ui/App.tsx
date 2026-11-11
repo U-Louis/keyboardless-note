@@ -36,10 +36,12 @@ function loadEditor(): Editor {
 export function App() {
   const [editor, setEditor] = useState<Editor>(loadEditor)
   const [speech, setSpeech] = useState<'idle' | 'recording' | 'sending'>('idle')
+  const [hands, setHands] = useState(false)
   const [readout, setReadout] = useState<string | null>(null)
   const [transcript, setTranscript] = useState<string | null>(null)
   const editorRef = useRef(editor)
   const speechRef = useRef(speech)
+  const handsRef = useRef(false)
   const sessionRef = useRef<SpeechSession | null>(null)
   const hold = useRef(0)
   const releasedHold = useRef(0)
@@ -47,6 +49,7 @@ export function App() {
   const finishRef = useRef<(token: number) => Promise<void>>(async () => {})
   editorRef.current = editor
   speechRef.current = speech
+  handsRef.current = hands
 
   useEffect(() => {
     const list = document.getElementById('notes')
@@ -54,6 +57,36 @@ export function App() {
       list.focus()
     }
   }, [])
+
+  useEffect(() => {
+    if (hands) return
+    function block(event: Event) {
+      event.preventDefault()
+      event.stopPropagation()
+    }
+    function blockPointer(event: Event) {
+      const target = event.target
+      if (target instanceof Element && target.closest('.talk, .tag')) return
+      block(event)
+    }
+    const keys = ['keydown', 'keyup', 'keypress', 'beforeinput'] as const
+    const pointers = [
+      'pointerdown',
+      'pointerup',
+      'mousedown',
+      'mouseup',
+      'click',
+      'dblclick',
+      'auxclick',
+      'contextmenu',
+    ] as const
+    for (const type of keys) window.addEventListener(type, block, true)
+    for (const type of pointers) window.addEventListener(type, blockPointer, true)
+    return () => {
+      for (const type of keys) window.removeEventListener(type, block, true)
+      for (const type of pointers) window.removeEventListener(type, blockPointer, true)
+    }
+  }, [hands])
 
   const selected = editor.notes.find((note) => note.id === editor.selectedId) ?? null
 
@@ -86,7 +119,7 @@ export function App() {
   }
 
   function startCreate() {
-    if (speechRef.current !== 'idle') return
+    if (!handsRef.current || speechRef.current !== 'idle') return
     const current = editorRef.current
     if (current.creating && current.title.trim() === '' && current.body === '') {
       queueMicrotask(() => document.getElementById('title')?.focus())
@@ -121,7 +154,7 @@ export function App() {
   }
 
   function selectNote(id: string) {
-    if (speechRef.current !== 'idle') return
+    if (!handsRef.current || speechRef.current !== 'idle') return
     const current = editorRef.current
     if (!current.creating && current.selectedId === id) return
     let notes = current.notes
@@ -147,7 +180,7 @@ export function App() {
   }
 
   function removeNote(id: string) {
-    if (speechRef.current !== 'idle') return
+    if (!handsRef.current || speechRef.current !== 'idle') return
     const current = editorRef.current
     const index = current.notes.findIndex((note) => note.id === id)
     const notes = deleteNote(current.notes, id)
@@ -270,6 +303,10 @@ export function App() {
   }
 
   function onListKeyDown(event: KeyboardEvent<HTMLUListElement>) {
+    if (!handsRef.current) {
+      event.preventDefault()
+      return
+    }
     if (event.target !== event.currentTarget) return
     if (event.key === 'v') {
       event.preventDefault()
@@ -441,7 +478,18 @@ export function App() {
     speech === 'recording' ? 'Listening' : speech === 'sending' ? 'Thinking' : 'Hold to talk'
 
   return (
-    <main data-speech={speech === 'idle' ? undefined : speech}>
+    <main data-hands={hands ? 'on' : 'off'} data-speech={speech === 'idle' ? undefined : speech}>
+      <div className="bar">
+        <button
+          type="button"
+          className="tag"
+          aria-pressed={hands}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => setHands((on) => !on)}
+        >
+          Input
+        </button>
+      </div>
       <p className="hint">
         n new, arrows move, enter opens the body, esc returns to the list, d deletes, hold v to
         talk.
@@ -469,7 +517,7 @@ export function App() {
                 onClick={() => selectNote(note.id)}
               >
                 <article className="card">
-                  {active ? (
+                  {active && hands ? (
                     <CardFields
                       title={editor.title}
                       body={editor.body}
@@ -486,7 +534,9 @@ export function App() {
                     <>
                       <div className="card-head">
                         <h2 className="card-title">{note.title}</h2>
-                        <DeleteButton title={note.title} onDelete={() => removeNote(note.id)} />
+                        {hands ? (
+                          <DeleteButton title={note.title} onDelete={() => removeNote(note.id)} />
+                        ) : null}
                       </div>
                       <p className="card-body">{note.body}</p>
                     </>
@@ -498,24 +548,33 @@ export function App() {
           {editor.creating ? (
             <li role="none" className="draft">
               <article className="card card-draft">
-                <CardFields
-                  title={editor.title}
-                  body={editor.body}
-                  onTitleChange={(value) =>
-                    setEditor((current) => ({ ...current, title: value }))
-                  }
-                  onTitleKeyDown={onTitleKeyDown}
-                  onBodyChange={onBodyChange}
-                  onBodyKeyDown={onBodyKeyDown}
-                />
+                {hands ? (
+                  <CardFields
+                    title={editor.title}
+                    body={editor.body}
+                    onTitleChange={(value) =>
+                      setEditor((current) => ({ ...current, title: value }))
+                    }
+                    onTitleKeyDown={onTitleKeyDown}
+                    onBodyChange={onBodyChange}
+                    onBodyKeyDown={onBodyKeyDown}
+                  />
+                ) : (
+                  <>
+                    <h2 className="card-title">{editor.title}</h2>
+                    <p className="card-body">{editor.body}</p>
+                  </>
+                )}
               </article>
             </li>
           ) : null}
-          <li role="none">
-            <button type="button" className="add" aria-label="Add card" onClick={startCreate}>
-              +
-            </button>
-          </li>
+          {hands ? (
+            <li role="none">
+              <button type="button" className="add" aria-label="Add card" onClick={startCreate}>
+                +
+              </button>
+            </li>
+          ) : null}
         </ul>
       </section>
       {readout ? <p data-readout={readout}>{readout}</p> : null}

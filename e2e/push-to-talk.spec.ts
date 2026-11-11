@@ -7,7 +7,17 @@ test.use({
   },
 })
 
+async function allowInput(page: Page) {
+  const tag = page.getByRole('button', { name: 'Input' })
+  if ((await tag.getAttribute('aria-pressed')) !== 'true') await tag.click()
+  await expect(tag).toHaveAttribute('aria-pressed', 'true')
+  const list = page.getByRole('listbox', { name: 'Notes' })
+  await list.focus()
+  await expect(list).toBeFocused()
+}
+
 async function holdTalk(page: Page) {
+  await allowInput(page)
   await page.keyboard.down('v')
   await expect(page.locator('[data-speech="recording"]')).toBeVisible()
   await page.waitForTimeout(400)
@@ -64,6 +74,7 @@ test('a spoken empty title is refused', async ({ page }) => {
 
 test('a spoken delete removes the selected note', async ({ page }) => {
   await page.goto('/')
+  await allowInput(page)
   await page.keyboard.press('n')
   await page.keyboard.type('Lamp')
   await page.keyboard.press('Enter')
@@ -81,6 +92,7 @@ test('a spoken delete removes the selected note', async ({ page }) => {
     })
   })
   await holdTalk(page)
+  await expect(page.getByRole('option')).toHaveCount(0)
   await page.reload()
   await expect(page.getByRole('option')).toHaveCount(0)
 })
@@ -123,6 +135,7 @@ test('a blocked microphone explains that the editor browser does not allow it', 
   })
   await page.goto('/')
   await expect(page.getByRole('listbox', { name: 'Notes' })).toBeFocused()
+  await allowInput(page)
   await page.keyboard.down('v')
   const error = page.locator('[data-error-code="speech.mic"]')
   await expect(error).toHaveText(
@@ -211,6 +224,7 @@ test('a route plan creates the note and then its body', async ({ page }) => {
 test('a spoken read shows the card and a spoken count shows the total', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByRole('listbox', { name: 'Notes' })).toBeFocused()
+  await allowInput(page)
   await page.keyboard.press('n')
   await expect(page.getByLabel('Title')).toBeFocused()
   await page.keyboard.type('Lamp')

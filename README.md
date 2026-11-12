@@ -2,7 +2,7 @@
 
 A simple note app you could build from any beginner tutorial. Except this one doesn't require a keyboard: you just tell it what to do.
 
-It uses openai's [whisper](https://github.com/openai/whisper) (wrapped in a [fastapi](https://github.com/fastapi/fastapi)) for speech recognition.
+It uses openai's [whisper](https://github.com/openai/whisper) ([wrapped](https://github.com/U-Louis/whisper-api) in a [fastapi](https://github.com/fastapi/fastapi)) for speech recognition.
 
 Then, it passes the transcript to an LLM to pick actions from a structure list.
 

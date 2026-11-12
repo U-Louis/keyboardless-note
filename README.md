@@ -1,4 +1,10 @@
+<p align="center">
+  <img alt="lazy meat proxy" width="320" src="assets/logo-light.svg#gh-light-mode-only">
+  <img alt="lazy meat proxy" width="320" src="assets/logo-dark.svg#gh-dark-mode-only">
+</p>
+
 # Keyboardless note
+
 
 A simple note app you could build from any beginner tutorial. Except this one doesn't require a keyboard: you just tell it what to do.
 
